@@ -13,4 +13,3 @@ class Task:
         self.history = []
         self.id = Task.totalTask
         Task.totalTask += 1
-        print(self.id)

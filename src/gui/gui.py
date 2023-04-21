@@ -16,10 +16,10 @@ from PySide6.QtWidgets import (
     QApplication,
     QGridLayout,
     QLineEdit,
-    QCalendarWidget,
-    QDialog
+    QSpinBox,
+    QMessageBox
 )
-from PySide6.QtGui import Qt, QDropEvent, QMouseEvent, QDrag, QCloseEvent
+from PySide6.QtGui import Qt, QDropEvent, QMouseEvent, QDrag, QCloseEvent, QDragEnterEvent
 from src.board.Task import Task
 from src.board.Column import Column
 from src.board.Board import Board
@@ -89,13 +89,13 @@ class TaskDetail(QWidget):
 
     def OnStartDateChange(self):
         self.task.Date[0] = str(self.calender.selectedDate().day()) + "/" \
-                              + str(self.calender.selectedDate().month()) + "/" \
-                              + str(self.calender.selectedDate().year())
+                            + str(self.calender.selectedDate().month()) + "/" \
+                            + str(self.calender.selectedDate().year())
 
     def OnEndDateChange(self):
         self.task.Date[1] = str(self.calender.selectedDate().day()) + "/" \
-                              + str(self.calender.selectedDate().month()) + "/" \
-                              + str(self.calender.selectedDate().year())
+                            + str(self.calender.selectedDate().month()) + "/" \
+                            + str(self.calender.selectedDate().year())
 
     def closeEvent(self, event: QCloseEvent) -> None:
         self.closeSignal.emit()
@@ -112,8 +112,8 @@ class TaskCard(QWidget):
         self.titleLabel = QLabel(task.title)
         self.titleLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.task_detail = TaskDetail(self.task)
-        self.task_detail.closeSignal.connect(lambda: self.titleLabel.setText(self.task.title))
+        self.taskDetail = TaskDetail(self.task)
+        self.taskDetail.closeSignal.connect(lambda: self.titleLabel.setText(self.task.title))
 
         # Layout
         layout = QVBoxLayout()
@@ -121,18 +121,30 @@ class TaskCard(QWidget):
         self.setLayout(layout)
 
     def mouseDoubleClickEvent(self, event) -> None:
-        self.task_detail.show()
+        self.taskDetail.show()
         super(TaskCard, self).mouseDoubleClickEvent(event)
 
 
 class TaskList(QListWidget):
-    def __init__(self):
+    def __init__(self, taskList: list):
         super(TaskList, self).__init__()
+        self.taskList = taskList
 
         self.setAcceptDrops(True)
         self.dragEnabled()
         self.setDragDropMode(QAbstractItemView.DragDropMode.DragDrop)
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.initList(self.taskList)
+
+        self.buildList()
+
+    def initList(self, list: list):
+        for i in list:
+            item = QListWidgetItem()
+            itemWidget = TaskCard(i)
+            item.setSizeHint(itemWidget.sizeHint())
+            self.addItem(item)
+            self.setItemWidget(item, itemWidget)
 
     def dropEvent(self, event: QDropEvent) -> None:
         source: TaskList = event.source()
@@ -146,84 +158,112 @@ class TaskList(QListWidget):
             item = source.takeItem(source.currentRow())
             self.addItem(item)
             self.setItemWidget(item, TaskCard(_task))
-            event.setDropAction(Qt.DropAction.IgnoreAction)
+            event.setDropAction(Qt.DropAction.TargetMoveAction)
         else:
             event.setDropAction(Qt.DropAction.MoveAction)
+
         super().dropEvent(event)
+
+    def buildList(self):
+        list = []
+        for i in range(self.count()):
+            task: TaskCard = self.itemWidget(self.item(i))
+            list.append(task.task)
+
+        return list
 
 
 class SubBoard(QFrame):
+    columnIndex = 0
+
     def __init__(self, column: Column):
         super(SubBoard, self).__init__()
 
         self.column = column
+        self.index = SubBoard.columnIndex
+        SubBoard.columnIndex += 1
 
         self.init_ui(self.column)
-        self.init_list()
 
     def init_ui(self, column: Column):
         # Button Widgets
-        self.add_button = QPushButton("add")
-        self.del_button = QPushButton("del")
-        self.destroy_button = QPushButton("destroy")
+        self.addButton = QPushButton("add")
+        self.delButton = QPushButton("del")
+        self.destroyButton = QPushButton("destroy")
         # Connect the signal
-        self.add_button.clicked.connect(self.add_button_clicked)
-        self.del_button.clicked.connect(self.del_button_clicked)
-        self.destroy_button.clicked.connect(self.destory_button_clicked)
+        self.addButton.clicked.connect(self.AddButtonClicked)
+        self.delButton.clicked.connect(self.DelButtonClicked)
+        self.destroyButton.clicked.connect(self.DestroyButtonClicked)
 
-        # Column labe
-        self.title_label = QLabel(column.title)
+        # Column label
+        self.titleLabel = QLineEdit(column.title)
+        self.titleLabel.textChanged.connect(self.ColumnTitleChanged)
+        self.wip = QSpinBox()
+        self.wip.setFixedSize(50, 30)
+        self.wip.textChanged.connect(self.WIPChanged)
 
         # Task List
-        self.task_list = TaskList()
+        self.taskList = TaskList(column.taskList)
 
         # Main layout
         layout = QVBoxLayout()
-        button_layout = QHBoxLayout()
-        layout.addWidget(self.title_label)
-        layout.addWidget(self.task_list)
+        buttonLayout = QHBoxLayout()
+        labelLayout = QHBoxLayout()
+        layout.addLayout(labelLayout)
+        layout.addWidget(self.taskList)
+        layout.addLayout(buttonLayout)
+        # Label Layout
+        labelLayout.addWidget(self.titleLabel)
+        labelLayout.addWidget(self.wip)
         # Button layout
-        layout.addLayout(button_layout)
-        button_layout.addWidget(self.add_button)
-        button_layout.addWidget(self.del_button)
-        button_layout.addWidget(self.destroy_button)
+        buttonLayout.addWidget(self.addButton)
+        buttonLayout.addWidget(self.delButton)
+        buttonLayout.addWidget(self.destroyButton)
 
         self.setLayout(layout)
 
-    def init_list(self):
-        for i in self.column.taskList:
+    def AddButtonClicked(self):
+        if int(self.column.WIPLimit) == 0 or self.taskList.count() < int(self.column.WIPLimit):
             item = QListWidgetItem()
-            itemWidget = TaskCard(i)
+            task = Task()
+            itemWidget = TaskCard(task)
             item.setSizeHint(itemWidget.sizeHint())
-            self.task_list.addItem(item)
-            self.task_list.setItemWidget(item, itemWidget)
+            self.column.taskList.append(task)
+            self.taskList.addItem(item)
+            self.taskList.setItemWidget(item, itemWidget)
+            self.taskList.buildList()
+        else:
+            dialog = QMessageBox()
+            dialog.setWindowTitle("Task add fail!")
+            dialog.setText("Maximum Reached!")
+            dialog.exec()
 
-    def add_button_clicked(self):
-        item = QListWidgetItem()
-        itemWidget = TaskCard(Task())
-        item.setSizeHint(itemWidget.sizeHint())
-        self.task_list.addItem(item)
-        self.task_list.setItemWidget(item, itemWidget)
+    def DelButtonClicked(self):
+        selectedItems = self.taskList.selectedItems()
+        if selectedItems:
+            for item in selectedItems:
+                self.taskList.takeItem(self.taskList.row(item))
+            self.taskList.buildList()
 
-    def del_button_clicked(self):
-        selected_items = self.task_list.selectedItems()
-        if selected_items:
-            for item in selected_items:
-                self.task_list.takeItem(self.task_list.row(item))
-
-    def destory_button_clicked(self):
+    def DestroyButtonClicked(self):
         for index in reversed(range(self.layout().count() - 1)):
             self.layout().takeAt(index).widget().deleteLater()
 
         self.deleteLater()
 
+    def WIPChanged(self):
+        self.column.WIPLimit = self.wip.text()
+
+    def ColumnTitleChanged(self):
+        self.column.title = self.titleLabel.text()
+
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         if event.buttons() == Qt.MouseButton.LeftButton:
             drag = QDrag(self)
-            widget_image = self.grab()
-            mimedata = QMimeData()
-            drag.setMimeData(mimedata)
-            drag.setPixmap(widget_image)
+            widgetImage = self.grab()
+            mimeData = QMimeData()
+            drag.setMimeData(mimeData)
+            drag.setPixmap(widgetImage)
             drag.setHotSpot(event.position().toPoint() - self.rect().topLeft())
             drag.exec()
 
@@ -235,6 +275,8 @@ class MainBoard(QWidget):
         super().__init__()
 
         self.board = board
+
+        self.setAcceptDrops(True)
 
         self.init_UI()
         self.init_column()
@@ -275,6 +317,28 @@ class MainBoard(QWidget):
         column_widget = SubBoard(ins_column)
 
         self.board_layout.insertWidget(self.board_layout.count() - 1, column_widget)
+
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None:
+        if isinstance(event.source(), SubBoard):
+            event.accept()
+
+    def dropEvent(self, event: QDropEvent) -> None:
+        pos = event.position().toPoint()
+
+        widget: SubBoard = event.source()
+
+        subLayout = self.layout().itemAt(0)
+        widgetIndex = -1
+        for i in range(subLayout.count()):
+            if subLayout.itemAt(i).geometry().contains(pos):
+                widgetIndex = i
+
+        if widgetIndex >= 0:
+            index = min(widgetIndex, subLayout.count() - 1)
+            subLayout.insertWidget(index, widget)
+
+        event.setDropAction(Qt.DropAction.MoveAction)
+        event.accept()
 
 
 if __name__ == "__main__":

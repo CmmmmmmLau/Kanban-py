@@ -2,10 +2,10 @@ from src.board.Task import Task
 
 
 class Column:
-    def __init__(self, title="Column name", WIPLimit=-1):
+    def __init__(self, title="Column name", WIPLimit=0):
         self.title = title
         self.WIPLimit = WIPLimit
-        self.taskList = []
+        self.taskList = [Task()]
 
     def addTask(self, task: Task):
         self.taskList[task.id] = task

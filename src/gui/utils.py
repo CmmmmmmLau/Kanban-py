@@ -17,7 +17,6 @@ class DateCalendar(QCalendarWidget):
         self.highlightFormat.setForeground(self.palette().color(QPalette.HighlightedText))
 
         self.clicked.connect(self.DateIsClicked)
-        print(super().dateTextFormat())
 
     def RangeSelected(self, format):
         if self.StartDate and self.EndDate:
