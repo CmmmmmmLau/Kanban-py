@@ -1,8 +1,8 @@
 import xml.etree.ElementTree as ET
 
-from src.Board import Board
-from src.Task import Task
-from src.Column import Column
+from Board import Board
+from Column import Column
+from Task import Task
 
 
 def buildXML(project: Board, projectName="project"):

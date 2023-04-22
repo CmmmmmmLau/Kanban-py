@@ -1,6 +1,6 @@
-from PySide6.QtGui import QPalette, QTextCharFormat
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QApplication, QCalendarWidget, QWidget, QHBoxLayout, QLabel, QCheckBox, QGridLayout
+from PySide6.QtGui import QPalette, QTextCharFormat
+from PySide6.QtWidgets import QApplication, QCalendarWidget, QWidget, QLabel, QCheckBox, QGridLayout
 
 
 class DateCalendar(QCalendarWidget):
@@ -47,7 +47,7 @@ class DateCheckBox(QWidget):
         self.index = index
 
         self.checkBox = QCheckBox()
-        self.checkBox.clicked.connect(self.on_box_check)
+        self.checkBox.clicked.connect(self.OnBoxCheck)
         self.dateLabel = QLabel(self.text + " DD/MM/YYYY")
         self.dateLabel.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.dateLabel.setEnabled(False)
@@ -59,14 +59,16 @@ class DateCheckBox(QWidget):
 
         self.setLayout(layout)
 
-    def on_box_check(self):
+    def OnBoxCheck(self):
         self.dateLabel.setEnabled(self.checkBox.isChecked())
         if self.checkBox.isChecked() is False:
             self.dateLabel.setText(self.text + " DD/MM/YYYY")
         else:
-            self.dateLabel.setText(self.text + self.date[self.index])
+            if self.date[self.index]:
+                self.dateLabel.setText(self.text + self.date[self.index])
 
-
+    def isChecked(self):
+        return self.checkBox.isChecked()
 
 if __name__ == "__main__":
     app = QApplication([])

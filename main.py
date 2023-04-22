@@ -1,13 +1,15 @@
-import sys, os
+import os
 
 from PySide6.QtWidgets import QApplication, QMessageBox, QMainWindow, QHBoxLayout, QWidget
+
+from db import parserXML
 from gui import MainBoard, Board
-from db import buildXML, parserXML
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.setWindowTitle("Kanban - Python")
         self.initUI()
 
     def initUI(self):

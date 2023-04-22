@@ -2,6 +2,7 @@ import sys
 import time
 
 from PySide6.QtCore import QMimeData, Signal
+from PySide6.QtGui import Qt, QDropEvent, QMouseEvent, QDrag, QCloseEvent, QDragEnterEvent
 from PySide6.QtWidgets import (
     QWidget,
     QLabel,
@@ -19,11 +20,12 @@ from PySide6.QtWidgets import (
     QSpinBox,
     QMessageBox
 )
-from PySide6.QtGui import Qt, QDropEvent, QMouseEvent, QDrag, QCloseEvent, QDragEnterEvent
-from src.Task import Task
-from src.Column import Column
-from src.Board import Board
-from src.utils import DateCheckBox, DateCalendar
+
+from Board import Board
+from Column import Column
+from Task import Task
+from db import buildXML
+from utils import DateCheckBox, DateCalendar
 
 
 class TaskDetail(QWidget):
@@ -31,6 +33,8 @@ class TaskDetail(QWidget):
 
     def __init__(self, task: Task):
         super(TaskDetail, self).__init__()
+        self.setWindowTitle("Task Detail")
+        self.setMinimumSize(700, 500)
 
         self.task = task
 
@@ -51,30 +55,30 @@ class TaskDetail(QWidget):
         # LHS Widget
         self.titleLabel = QLineEdit(self.task.title)
         self.titleLabel.textChanged.connect(self.OnTitleChange)
-        checkStart = DateCheckBox("Start Date:", self.task.date, 0)
-        checkEnd = DateCheckBox("End Date:", self.task.date, 1)
+        self.checkStart = DateCheckBox("Start Date:", self.task.date, 0)
+        self.checkEnd = DateCheckBox("End Date:", self.task.date, 1)
         self.calender = DateCalendar()
         self.calender.StartDateChange.connect(self.OnStartDateChange)
         self.calender.EndDateChange.connect(self.OnEndDateChange)
 
         # Layout
-        LHS_layout = QGridLayout()
-        LHS_layout.addWidget(self.titleLabel, 0, 0)
-        LHS_layout.addWidget(checkStart, 1, 0)
-        LHS_layout.addWidget(checkEnd, 1, 1)
-        LHS_layout.addWidget(self.calender, 2, 0, -1, -1)
+        LHSLayout = QGridLayout()
+        LHSLayout.addWidget(self.titleLabel, 0, 0)
+        LHSLayout.addWidget(self.checkStart, 1, 0)
+        LHSLayout.addWidget(self.checkEnd, 1, 1)
+        LHSLayout.addWidget(self.calender, 2, 0, -1, -1)
 
-        RHS_layout = QVBoxLayout()
-        RHS_layout.addWidget(descriptionLabel)
-        RHS_layout.addWidget(self.descriptionEdit)
-        RHS_layout.addWidget(MovementHistoryLabel)
-        RHS_layout.addWidget(self.MovementHistoryList)
+        RHSLayout = QVBoxLayout()
+        RHSLayout.addWidget(descriptionLabel)
+        RHSLayout.addWidget(self.descriptionEdit)
+        RHSLayout.addWidget(MovementHistoryLabel)
+        RHSLayout.addWidget(self.MovementHistoryList)
 
-        main_layout = QHBoxLayout()
-        main_layout.addLayout(LHS_layout)
-        main_layout.addLayout(RHS_layout)
+        mainLayout = QHBoxLayout()
+        mainLayout.addLayout(LHSLayout)
+        mainLayout.addLayout(RHSLayout)
 
-        self.setLayout(main_layout)
+        self.setLayout(mainLayout)
 
     def InitHistoryItem(self, hisList: list):
         for i in hisList:
@@ -92,10 +96,16 @@ class TaskDetail(QWidget):
                             + str(self.calender.selectedDate().month()) + "/" \
                             + str(self.calender.selectedDate().year())
 
+        if self.checkStart.isChecked():
+            self.checkStart.OnBoxCheck()
+
     def OnEndDateChange(self):
         self.task.date[1] = str(self.calender.selectedDate().day()) + "/" \
                             + str(self.calender.selectedDate().month()) + "/" \
                             + str(self.calender.selectedDate().year())
+
+        if self.checkEnd.isChecked():
+            self.checkEnd.OnBoxCheck()
 
     def closeEvent(self, event: QCloseEvent) -> None:
         self.closeSignal.emit()
@@ -155,7 +165,8 @@ class TaskList(QListWidget):
             _task = Task()
         if source != self:
             parentBoard: SubBoard = self.parentWidget()
-            _task.history.append("Moved to " + parentBoard.titleLabel.text() + " on " + time.asctime(time.localtime(time.time())))
+            _task.history.append(
+                "Moved to " + parentBoard.titleLabel.text() + " on " + time.asctime(time.localtime(time.time())))
             item = source.takeItem(source.currentRow())
             self.addItem(item)
             self.setItemWidget(item, TaskCard(_task))
@@ -290,28 +301,36 @@ class MainBoard(QWidget):
 
     def InitUI(self):
         # Button
-        add_button = QPushButton("+")
-        add_button.clicked.connect(self.add_column)
+        addButton = QPushButton("+")
+        addButton.clicked.connect(self.add_column)
 
-        open_file_button = QPushButton("open")
-        save_file_button = QPushButton("save")
-        close_project_button = QPushButton("close")
+        # openFileButton = QPushButton("Open")
+        # openFileButton.clicked.connect(self.OnOpenButtonClicked)
+        saveFileButton = QPushButton("Save")
+        saveFileButton.clicked.connect(self.OnSaveButtonClicked)
+        # closeProjectButton = QPushButton("Close")
+        # closeProjectButton.clicked.connect(self.OnCloseButtonClicked)
 
+        # Title
+        self.projectTitle = QLineEdit()
+        self.projectTitle.setText(self.board.title)
+        self.projectTitle.setFixedSize(200, 25)
         # Layout
-        main_layout = QVBoxLayout()
+        mainLayout = QVBoxLayout()
+        mainLayout.addWidget(self.projectTitle)
 
         self.boardLayout = QHBoxLayout()
-        self.boardLayout.addWidget(add_button)
+        self.boardLayout.addWidget(addButton)
 
-        toolbar_layout = QHBoxLayout()
-        toolbar_layout.addWidget(open_file_button)
-        toolbar_layout.addWidget(save_file_button)
-        toolbar_layout.addWidget(close_project_button)
+        toolbarLayout = QHBoxLayout()
+        # toolbarLayout.addWidget(openFileButton)
+        toolbarLayout.addWidget(saveFileButton)
+        # toolbarLayout.addWidget(closeProjectButton)
 
-        main_layout.addLayout(self.boardLayout)
-        main_layout.addLayout(toolbar_layout)
+        mainLayout.addLayout(self.boardLayout)
+        mainLayout.addLayout(toolbarLayout)
 
-        self.setLayout(main_layout)
+        self.setLayout(mainLayout)
 
     def InitColumn(self):
         for i in self.board.columnList:
@@ -335,6 +354,9 @@ class MainBoard(QWidget):
                 self.board.columnList.pop(index)
             index += 1
 
+    def OnSaveButtonClicked(self):
+        buildXML(self.board)
+
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
         if isinstance(event.source(), SubBoard):
             event.accept()
@@ -344,7 +366,7 @@ class MainBoard(QWidget):
 
         widget: SubBoard = event.source()
 
-        subLayout = self.layout().itemAt(0)
+        subLayout = self.layout().itemAt(1)
         widgetIndex = -1
         for i in range(subLayout.count()):
             if subLayout.itemAt(i).geometry().contains(pos):
