@@ -1,4 +1,4 @@
-from src.board.Task import Task
+from src.Task import Task
 
 
 class Column:

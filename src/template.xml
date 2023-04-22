@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project>
+	<Board title="Template board">
+		<Column title="To Do" WIPLimit="0">
+			<Task title="Task 1">
+				<description>description for task 1</description>
+				<date>
+					<StartDate />
+					<EndDate />
+				</date>
+				<historyList />
+			</Task>
+			<Task title="Task 2">
+				<description>description for task 1</description>
+				<date>
+					<StartDate />
+					<EndDate />
+				</date>
+				<historyList />
+			</Task>
+		</Column>
+		<Column title="In Progress" WIPLimit="0">
+			<Task title="Task 3">
+				<description>description for task 0</description>
+				<date>
+					<StartDate />
+					<EndDate />
+				</date>
+				<historyList />
+			</Task>
+		</Column>
+		<Column title="Done" WIPLimit="0">
+
+		</Column>
+	</Board>
+</Project>

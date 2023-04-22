@@ -1,7 +1,7 @@
-import random
 import sys
+import time
 
-from PySide6.QtCore import QMimeData, Signal, Slot
+from PySide6.QtCore import QMimeData, Signal
 from PySide6.QtWidgets import (
     QWidget,
     QLabel,
@@ -20,10 +20,10 @@ from PySide6.QtWidgets import (
     QMessageBox
 )
 from PySide6.QtGui import Qt, QDropEvent, QMouseEvent, QDrag, QCloseEvent, QDragEnterEvent
-from src.board.Task import Task
-from src.board.Column import Column
-from src.board.Board import Board
-from src.gui.utils import DateCheckBox, DateCalendar
+from src.Task import Task
+from src.Column import Column
+from src.Board import Board
+from src.utils import DateCheckBox, DateCalendar
 
 
 class TaskDetail(QWidget):
@@ -51,8 +51,8 @@ class TaskDetail(QWidget):
         # LHS Widget
         self.titleLabel = QLineEdit(self.task.title)
         self.titleLabel.textChanged.connect(self.OnTitleChange)
-        checkStart = DateCheckBox("Start Date:", self.task.Date, 0)
-        checkEnd = DateCheckBox("End Date:", self.task.Date, 1)
+        checkStart = DateCheckBox("Start Date:", self.task.date, 0)
+        checkEnd = DateCheckBox("End Date:", self.task.date, 1)
         self.calender = DateCalendar()
         self.calender.StartDateChange.connect(self.OnStartDateChange)
         self.calender.EndDateChange.connect(self.OnEndDateChange)
@@ -88,12 +88,12 @@ class TaskDetail(QWidget):
         self.task.title = self.titleLabel.text()
 
     def OnStartDateChange(self):
-        self.task.Date[0] = str(self.calender.selectedDate().day()) + "/" \
+        self.task.date[0] = str(self.calender.selectedDate().day()) + "/" \
                             + str(self.calender.selectedDate().month()) + "/" \
                             + str(self.calender.selectedDate().year())
 
     def OnEndDateChange(self):
-        self.task.Date[1] = str(self.calender.selectedDate().day()) + "/" \
+        self.task.date[1] = str(self.calender.selectedDate().day()) + "/" \
                             + str(self.calender.selectedDate().month()) + "/" \
                             + str(self.calender.selectedDate().year())
 
@@ -158,6 +158,9 @@ class TaskList(QListWidget):
             self.addItem(item)
             self.setItemWidget(item, TaskCard(_task))
             event.setDropAction(Qt.DropAction.TargetMoveAction)
+            parentBoard: SubBoard = self.parentWidget()
+            _task.history.append("Moved to " + parentBoard.titleLabel.text() + " on " + time.asctime(time.localtime(time.time())))
+            print("Hi")
         else:
             event.setDropAction(Qt.DropAction.MoveAction)
 
@@ -228,6 +231,7 @@ class SubBoard(QFrame):
         if int(self.column.WIPLimit) == 0 or self.taskList.count() < int(self.column.WIPLimit):
             item = QListWidgetItem()
             task = Task()
+            task.history.append("Created on " + time.asctime(time.localtime(time.time())))
             itemWidget = TaskCard(task)
             item.setSizeHint(itemWidget.sizeHint())
             self.column.taskList.append(task)
@@ -330,10 +334,6 @@ class MainBoard(QWidget):
         for i in allWidget:
             if self.sender() == i:
                 self.board.columnList.pop(index)
-                board: SubBoard = i
-                print("Found!")
-                print(board.titleLabel.text())
-                print()
             index += 1
 
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
