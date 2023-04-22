@@ -5,7 +5,7 @@ class Column:
     def __init__(self, title="Column name", WIPLimit=0):
         self.title = title
         self.WIPLimit = WIPLimit
-        self.taskList = [Task()]
+        self.taskList = []
 
     def addTask(self, task: Task):
         self.taskList[task.id] = task

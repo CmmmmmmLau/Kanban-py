@@ -136,7 +136,7 @@ class TaskList(QListWidget):
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.initList(self.taskList)
 
-        self.buildList()
+        self.taskList = self.buildTaskList()
 
     def initList(self, list: list):
         for i in list:
@@ -151,7 +151,6 @@ class TaskList(QListWidget):
         item: QListWidgetItem = source.currentItem()
         itemWidget: TaskCard = source.itemWidget(item)
         _task = itemWidget.task
-
         if _task is None:
             _task = Task()
         if source != self:
@@ -164,24 +163,27 @@ class TaskList(QListWidget):
 
         super().dropEvent(event)
 
-    def buildList(self):
+    def buildTaskList(self):
         list = []
         for i in range(self.count()):
             task: TaskCard = self.itemWidget(self.item(i))
-            list.append(task.task)
+            if task:
+                list.append(task.task)
 
         return list
 
 
 class SubBoard(QFrame):
-    columnIndex = 0
+    DestroySignal = Signal()
+
+    # columnIndex = 0
 
     def __init__(self, column: Column):
         super(SubBoard, self).__init__()
 
         self.column = column
-        self.index = SubBoard.columnIndex
-        SubBoard.columnIndex += 1
+        # self.index = SubBoard.columnIndex
+        # SubBoard.columnIndex += 1
 
         self.init_ui(self.column)
 
@@ -231,7 +233,8 @@ class SubBoard(QFrame):
             self.column.taskList.append(task)
             self.taskList.addItem(item)
             self.taskList.setItemWidget(item, itemWidget)
-            self.taskList.buildList()
+            self.column.taskList = self.taskList.buildTaskList()
+
         else:
             dialog = QMessageBox()
             dialog.setWindowTitle("Task add fail!")
@@ -243,13 +246,14 @@ class SubBoard(QFrame):
         if selectedItems:
             for item in selectedItems:
                 self.taskList.takeItem(self.taskList.row(item))
-            self.taskList.buildList()
+            self.column.taskList = self.taskList.buildTaskList()
 
     def DestroyButtonClicked(self):
-        for index in reversed(range(self.layout().count() - 1)):
-            self.layout().takeAt(index).widget().deleteLater()
-
+        # for index in reversed(range(self.layout().count() - 1)):
+        #     self.layout().takeAt(index).widget().deleteLater()
+        self.column = None
         self.deleteLater()
+        self.DestroySignal.emit()
 
     def WIPChanged(self):
         self.column.WIPLimit = self.wip.text()
@@ -278,10 +282,10 @@ class MainBoard(QWidget):
 
         self.setAcceptDrops(True)
 
-        self.init_UI()
-        self.init_column()
+        self.InitUI()
+        self.InitColumn()
 
-    def init_UI(self):
+    def InitUI(self):
         # Button
         add_button = QPushButton("+")
         add_button.clicked.connect(self.add_column)
@@ -293,30 +297,44 @@ class MainBoard(QWidget):
         # Layout
         main_layout = QVBoxLayout()
 
-        self.board_layout = QHBoxLayout()
-        self.board_layout.addWidget(add_button)
+        self.boardLayout = QHBoxLayout()
+        self.boardLayout.addWidget(add_button)
 
         toolbar_layout = QHBoxLayout()
         toolbar_layout.addWidget(open_file_button)
         toolbar_layout.addWidget(save_file_button)
         toolbar_layout.addWidget(close_project_button)
 
-        main_layout.addLayout(self.board_layout)
+        main_layout.addLayout(self.boardLayout)
         main_layout.addLayout(toolbar_layout)
 
         self.setLayout(main_layout)
 
-    def init_column(self):
+    def InitColumn(self):
         for i in self.board.columnList:
-            ins_column = Column(i.title)
-            column_widget = SubBoard(ins_column)
-            self.board_layout.insertWidget(self.board_layout.count() - 1, column_widget)
+            insColumn = Column(i.title)
+            columnWidget = SubBoard(insColumn)
+            columnWidget.DestroySignal.connect(self.ColumnDel)
+            self.boardLayout.insertWidget(self.boardLayout.count() - 1, columnWidget)
 
     def add_column(self):
-        ins_column = Column()
-        column_widget = SubBoard(ins_column)
+        insColumn = Column()
+        columnWidget = SubBoard(insColumn)
+        columnWidget.DestroySignal.connect(self.ColumnDel)
+        self.board.columnList.append(insColumn)
+        self.boardLayout.insertWidget(self.boardLayout.count() - 1, columnWidget)
 
-        self.board_layout.insertWidget(self.board_layout.count() - 1, column_widget)
+    def ColumnDel(self):
+        allWidget = self.findChildren(SubBoard)
+        index = 0
+        for i in allWidget:
+            if self.sender() == i:
+                self.board.columnList.pop(index)
+                board: SubBoard = i
+                print("Found!")
+                print(board.titleLabel.text())
+                print()
+            index += 1
 
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
         if isinstance(event.source(), SubBoard):
