@@ -48,21 +48,21 @@ def parserXML(fileAddress="template.xml"):
         columnTitle = n.attrib.get("title")
         _column = Column(columnTitle, columnWIP)
         _board.columnList.append(_column)
-
         for m in n.iter("Task"):
-            # task_id = m.attrib.get("id")
-            taskTitle = m.attrib.get("title")
-            taskDescribe = m.find("description").text
-            # taskPriority = m.find("priority").text
-            taskStartDate = m.find("date").find("StartDate").text
-            taskEndDate = m.find("date").find("EndDate").text
-            _task = Task(taskTitle, taskDescribe, taskStartDate, taskEndDate)
-            _column.taskList.append(_task)
+            if m:
+                # task_id = m.attrib.get("id")
+                taskTitle = m.attrib.get("title")
+                taskDescribe = m.find("description").text
+                # taskPriority = m.find("priority").text
+                taskStartDate = m.find("date").find("StartDate").text
+                taskEndDate = m.find("date").find("EndDate").text
+                _task = Task(taskTitle, taskDescribe, taskStartDate, taskEndDate)
+                _column.taskList.append(_task)
 
-            taskHisList = m.find("historyList")
-            if len(taskHisList.findall("history")):
-                for v in taskHisList.iter("history"):
-                    _task.history.append(v.text)
+                taskHisList = m.find("historyList")
+                if len(taskHisList.findall("history")):
+                    for v in taskHisList.iter("history"):
+                        _task.history.append(v.text)
 
     return _board
 

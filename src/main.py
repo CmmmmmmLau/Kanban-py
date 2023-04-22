@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QApplication, QMessageBox, QMainWindow, QHBoxLayou
 from gui import MainBoard, Board
 from db import buildXML, parserXML
 
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -17,7 +18,8 @@ class MainWindow(QMainWindow):
             boardWindow = MainBoard(board)
             layout.addWidget(boardWindow)
         else:
-            reply = QMessageBox.question(self, "", "Project file not found. Load template?", QMessageBox.Yes | QMessageBox.No)
+            reply = QMessageBox.question(self, "", "Project file not found. Load template?",
+                                         QMessageBox.Yes | QMessageBox.No)
 
             if reply == QMessageBox.Yes:
                 board = parserXML("template.xml")
@@ -31,6 +33,7 @@ class MainWindow(QMainWindow):
         widget.setLayout(layout)
         self.setCentralWidget(widget)
         self.adjustSize()
+
 
 if __name__ == '__main__':
     app = QApplication([])

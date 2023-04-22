@@ -6,9 +6,3 @@ class Column:
         self.title = title
         self.WIPLimit = WIPLimit
         self.taskList = []
-
-    def addTask(self, task: Task):
-        self.taskList[task.id] = task
-
-    def removeTask(self, target):
-        del self.taskList[target]

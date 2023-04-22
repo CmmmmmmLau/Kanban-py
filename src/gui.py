@@ -126,9 +126,9 @@ class TaskCard(QWidget):
 
 
 class TaskList(QListWidget):
-    def __init__(self, taskList: list):
+    def __init__(self, column: Column):
         super(TaskList, self).__init__()
-        self.taskList = taskList
+        self.taskList = column.taskList
 
         self.setAcceptDrops(True)
         self.dragEnabled()
@@ -154,13 +154,12 @@ class TaskList(QListWidget):
         if _task is None:
             _task = Task()
         if source != self:
+            parentBoard: SubBoard = self.parentWidget()
+            _task.history.append("Moved to " + parentBoard.titleLabel.text() + " on " + time.asctime(time.localtime(time.time())))
             item = source.takeItem(source.currentRow())
             self.addItem(item)
             self.setItemWidget(item, TaskCard(_task))
             event.setDropAction(Qt.DropAction.TargetMoveAction)
-            parentBoard: SubBoard = self.parentWidget()
-            _task.history.append("Moved to " + parentBoard.titleLabel.text() + " on " + time.asctime(time.localtime(time.time())))
-            print("Hi")
         else:
             event.setDropAction(Qt.DropAction.MoveAction)
 
@@ -208,7 +207,7 @@ class SubBoard(QFrame):
         self.wip.textChanged.connect(self.WIPChanged)
 
         # Task List
-        self.taskList = TaskList(column.taskList)
+        self.taskList = TaskList(self.column)
 
         # Main layout
         layout = QVBoxLayout()
@@ -316,7 +315,7 @@ class MainBoard(QWidget):
 
     def InitColumn(self):
         for i in self.board.columnList:
-            insColumn = Column(i.title)
+            insColumn = i
             columnWidget = SubBoard(insColumn)
             columnWidget.DestroySignal.connect(self.ColumnDel)
             self.boardLayout.insertWidget(self.boardLayout.count() - 1, columnWidget)

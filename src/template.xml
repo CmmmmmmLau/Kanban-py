@@ -3,7 +3,7 @@
 	<Board title="Template board">
 		<Column title="To Do" WIPLimit="0">
 			<Task title="Task 1">
-				<description>description for task 1</description>
+				<description>description of task 1</description>
 				<date>
 					<StartDate />
 					<EndDate />
@@ -11,7 +11,7 @@
 				<historyList />
 			</Task>
 			<Task title="Task 2">
-				<description>description for task 1</description>
+				<description>description of task 2</description>
 				<date>
 					<StartDate />
 					<EndDate />
@@ -21,7 +21,7 @@
 		</Column>
 		<Column title="In Progress" WIPLimit="0">
 			<Task title="Task 3">
-				<description>description for task 0</description>
+				<description>description of task 3</description>
 				<date>
 					<StartDate />
 					<EndDate />
