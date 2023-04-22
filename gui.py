@@ -138,15 +138,13 @@ class TaskCard(QWidget):
 class TaskList(QListWidget):
     def __init__(self, column: Column):
         super(TaskList, self).__init__()
-        self.taskList = column.taskList
+        self.column = column
 
         self.setAcceptDrops(True)
         self.dragEnabled()
         self.setDragDropMode(QAbstractItemView.DragDropMode.DragDrop)
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
-        self.initList(self.taskList)
-
-        self.taskList = self.buildTaskList()
+        self.initList(self.column.taskList)
 
     def initList(self, list: list):
         for i in list:
@@ -173,7 +171,6 @@ class TaskList(QListWidget):
             event.setDropAction(Qt.DropAction.TargetMoveAction)
         else:
             event.setDropAction(Qt.DropAction.MoveAction)
-
         super().dropEvent(event)
 
     def buildTaskList(self):
@@ -355,6 +352,10 @@ class MainBoard(QWidget):
             index += 1
 
     def OnSaveButtonClicked(self):
+        allBoard = self.findChildren(SubBoard)
+        for i in allBoard:
+            subBoard: SubBoard = i
+            subBoard.column.taskList = subBoard.taskList.buildTaskList()
         buildXML(self.board)
 
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
