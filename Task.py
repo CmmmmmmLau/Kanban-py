@@ -6,6 +6,7 @@ class Task:
         self.describe = describe
         # self.priority = priority
         self.date = [startDate, endDate]
+        self.dateCheckStatus = ["0", "0"]
         self.history = []
         self.id = Task.totalTask
         Task.totalTask += 1

@@ -23,9 +23,9 @@ def buildXML(project: Board, projectName="project"):
             # priority.text = str(pj_task.priority)
 
             date = ET.SubElement(task, 'date')
-            StartDate = ET.SubElement(date, 'StartDate')
+            StartDate = ET.SubElement(date, 'StartDate', state=pj_task.dateCheckStatus[0])
             StartDate.text = pj_task.date[0]
-            EndDate = ET.SubElement(date, "EndDate")
+            EndDate = ET.SubElement(date, "EndDate", state=pj_task.dateCheckStatus[1])
             EndDate.text = pj_task.date[1]
 
             his = ET.SubElement(task, "historyList")
@@ -57,12 +57,16 @@ def parserXML(fileAddress="template.xml"):
                 taskStartDate = m.find("date").find("StartDate").text
                 taskEndDate = m.find("date").find("EndDate").text
                 _task = Task(taskTitle, taskDescribe, taskStartDate, taskEndDate)
-                _column.taskList.append(_task)
+
+                _task.dateCheckStatus[0] = m.find("date").find("StartDate").attrib.get("state")
+                _task.dateCheckStatus[1] = m.find("date").find("EndDate").attrib.get("state")
 
                 taskHisList = m.find("historyList")
                 if len(taskHisList.findall("history")):
                     for v in taskHisList.iter("history"):
                         _task.history.append(v.text)
+
+                _column.taskList.append(_task)
 
     return _board
 
@@ -79,4 +83,3 @@ if __name__ == "__main__":
     buildXML(board)
     _board = parserXML()
     buildXML(_board)
-

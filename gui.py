@@ -1,7 +1,7 @@
 import sys
 import time
 
-from PySide6.QtCore import QMimeData, Signal
+from PySide6.QtCore import QMimeData, Signal, QDate
 from PySide6.QtGui import Qt, QDropEvent, QMouseEvent, QDrag, QCloseEvent, QDragEnterEvent
 from PySide6.QtWidgets import (
     QWidget,
@@ -55,9 +55,13 @@ class TaskDetail(QWidget):
         # LHS Widget
         self.titleLabel = QLineEdit(self.task.title)
         self.titleLabel.textChanged.connect(self.OnTitleChange)
-        self.checkStart = DateCheckBox("Start Date:", self.task.date, 0)
-        self.checkEnd = DateCheckBox("End Date:", self.task.date, 1)
+        self.checkStart = DateCheckBox("Start Date:", self.task.date, 0, self.task.dateCheckStatus[0])
+        self.checkStart.OnCheck.connect(self.OnChecked)
+        self.checkEnd = DateCheckBox("End Date:", self.task.date, 1, self.task.dateCheckStatus[1])
+        self.checkStart.OnCheck.connect(self.OnChecked)
         self.calender = DateCalendar()
+        self.setDate()
+        self.calender.RangeSelected(self.calender.highlightFormat)
         self.calender.StartDateChange.connect(self.OnStartDateChange)
         self.calender.EndDateChange.connect(self.OnEndDateChange)
 
@@ -99,6 +103,10 @@ class TaskDetail(QWidget):
         if self.checkStart.isChecked():
             self.checkStart.OnBoxCheck()
 
+    def OnChecked(self):
+        self.task.dateCheckStatus[0] = int(self.checkStart.isChecked())
+        self.task.dateCheckStatus[1] = int(self.checkEnd.isChecked())
+
     def OnEndDateChange(self):
         self.task.date[1] = str(self.calender.selectedDate().day()) + "/" \
                             + str(self.calender.selectedDate().month()) + "/" \
@@ -107,9 +115,21 @@ class TaskDetail(QWidget):
         if self.checkEnd.isChecked():
             self.checkEnd.OnBoxCheck()
 
+    def setDate(self):
+        date: str = self.task.date[0]
+        if date:
+            day, month, year = date.split("/")
+            self.calender.StartDate = QDate(int(year), int(month), int(day))
+
+        date: str = self.task.date[1]
+        if date:
+            day, month, year = date.split("/")
+            self.calender.EndDate = QDate(int(year), int(month), int(day))
+
     def closeEvent(self, event: QCloseEvent) -> None:
         self.closeSignal.emit()
         super().closeEvent(event)
+
 
 
 class TaskCard(QWidget):
@@ -310,6 +330,7 @@ class MainBoard(QWidget):
 
         # Title
         self.projectTitle = QLineEdit()
+        self.projectTitle.textChanged.connect(self.OnTitleChange)
         self.projectTitle.setText(self.board.title)
         self.projectTitle.setFixedSize(200, 25)
         # Layout
@@ -379,6 +400,9 @@ class MainBoard(QWidget):
 
         event.setDropAction(Qt.DropAction.MoveAction)
         event.accept()
+
+    def OnTitleChange(self):
+        self.board.title = self.projectTitle.text()
 
 
 if __name__ == "__main__":

@@ -30,6 +30,7 @@ class DateCalendar(QCalendarWidget):
         self.RangeSelected(QTextCharFormat())
         if QApplication.instance().keyboardModifiers() & Qt.ShiftModifier and self.StartDate:
             self.EndDate = date
+            print(date)
             self.EndDateChange.emit()
             self.RangeSelected(self.highlightFormat)
         else:
@@ -39,7 +40,9 @@ class DateCalendar(QCalendarWidget):
 
 
 class DateCheckBox(QWidget):
-    def __init__(self, text, date: list, index=0):
+    OnCheck = Signal()
+
+    def __init__(self, text, date: list, index=0, check="0"):
         super(DateCheckBox, self).__init__()
 
         self.date = date
@@ -48,9 +51,10 @@ class DateCheckBox(QWidget):
 
         self.checkBox = QCheckBox()
         self.checkBox.clicked.connect(self.OnBoxCheck)
-        self.dateLabel = QLabel(self.text + " DD/MM/YYYY")
+        self.checkBox.setChecked(bool(int(check)))
+        self.dateLabel = QLabel()
+        self.OnBoxCheck()
         self.dateLabel.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self.dateLabel.setEnabled(False)
 
         layout = QGridLayout()
         layout.addWidget(self.checkBox, 0, 0)
@@ -63,9 +67,11 @@ class DateCheckBox(QWidget):
         self.dateLabel.setEnabled(self.checkBox.isChecked())
         if self.checkBox.isChecked() is False:
             self.dateLabel.setText(self.text + " DD/MM/YYYY")
+            self.dateLabel.setEnabled(False)
         else:
             if self.date[self.index]:
                 self.dateLabel.setText(self.text + self.date[self.index])
+                self.dateLabel.setEnabled(True)
 
     def isChecked(self):
         return self.checkBox.isChecked()

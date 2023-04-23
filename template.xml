@@ -5,16 +5,16 @@
 			<Task title="Task 1">
 				<description>description of task 1</description>
 				<date>
-					<StartDate />
-					<EndDate />
+					<StartDate state="0"/>
+					<EndDate state="0"/>
 				</date>
 				<historyList />
 			</Task>
 			<Task title="Task 2">
 				<description>description of task 2</description>
 				<date>
-					<StartDate />
-					<EndDate />
+					<StartDate state="0"/>
+					<EndDate state="0"/>
 				</date>
 				<historyList />
 			</Task>
@@ -23,8 +23,8 @@
 			<Task title="Task 3">
 				<description>description of task 3</description>
 				<date>
-					<StartDate />
-					<EndDate />
+					<StartDate state="0"/>
+					<EndDate state="0"/>
 				</date>
 				<historyList />
 			</Task>
