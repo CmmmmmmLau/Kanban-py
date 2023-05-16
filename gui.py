@@ -18,7 +18,8 @@ from PySide6.QtWidgets import (
     QGridLayout,
     QLineEdit,
     QSpinBox,
-    QMessageBox
+    QMessageBox,
+    QBoxLayout
 )
 
 from Board import Board
@@ -32,6 +33,7 @@ class TaskDetail(QWidget):
     closeSignal = Signal()
 
     def __init__(self, task: Task):
+
         super(TaskDetail, self).__init__()
         self.setWindowTitle("Task Detail")
         self.setMinimumSize(700, 500)
@@ -56,6 +58,7 @@ class TaskDetail(QWidget):
         self.titleLabel = QLineEdit(self.task.title)
         self.titleLabel.textChanged.connect(self.OnTitleChange)
         self.checkStart = DateCheckBox("Start Date:", self.task.date, 0, self.task.dateCheckStatus[0])
+
         self.checkStart.OnCheck.connect(self.OnChecked)
         self.checkEnd = DateCheckBox("End Date:", self.task.date, 1, self.task.dateCheckStatus[1])
         self.checkStart.OnCheck.connect(self.OnChecked)
@@ -104,8 +107,8 @@ class TaskDetail(QWidget):
             self.checkStart.OnBoxCheck()
 
     def OnChecked(self):
-        self.task.dateCheckStatus[0] = int(self.checkStart.isChecked())
-        self.task.dateCheckStatus[1] = int(self.checkEnd.isChecked())
+        self.task.dateCheckStatus[0] = str(int(self.checkStart.isChecked()))
+        self.task.dateCheckStatus[1] = str(int(self.checkEnd.isChecked()))
 
     def OnEndDateChange(self):
         self.task.date[1] = str(self.calender.selectedDate().day()) + "/" \
@@ -129,7 +132,6 @@ class TaskDetail(QWidget):
     def closeEvent(self, event: QCloseEvent) -> None:
         self.closeSignal.emit()
         super().closeEvent(event)
-
 
 
 class TaskCard(QWidget):
@@ -319,7 +321,7 @@ class MainBoard(QWidget):
     def InitUI(self):
         # Button
         addButton = QPushButton("+")
-        addButton.clicked.connect(self.add_column)
+        addButton.clicked.connect(self.AddColumn)
 
         # openFileButton = QPushButton("Open")
         # openFileButton.clicked.connect(self.OnOpenButtonClicked)
@@ -357,7 +359,7 @@ class MainBoard(QWidget):
             columnWidget.DestroySignal.connect(self.ColumnDel)
             self.boardLayout.insertWidget(self.boardLayout.count() - 1, columnWidget)
 
-    def add_column(self):
+    def AddColumn(self):
         insColumn = Column()
         columnWidget = SubBoard(insColumn)
         columnWidget.DestroySignal.connect(self.ColumnDel)
@@ -378,6 +380,9 @@ class MainBoard(QWidget):
             subBoard: SubBoard = i
             subBoard.column.taskList = subBoard.taskList.buildTaskList()
         buildXML(self.board)
+
+    def OnTitleChange(self):
+        self.board.title = self.projectTitle.text()
 
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
         if isinstance(event.source(), SubBoard):
@@ -400,9 +405,6 @@ class MainBoard(QWidget):
 
         event.setDropAction(Qt.DropAction.MoveAction)
         event.accept()
-
-    def OnTitleChange(self):
-        self.board.title = self.projectTitle.text()
 
 
 if __name__ == "__main__":

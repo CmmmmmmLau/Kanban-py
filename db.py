@@ -39,7 +39,7 @@ def buildXML(project: Board, projectName="project"):
     tree.write(projectName + ".xml", encoding='utf-8', xml_declaration=True)
 
 
-def parserXML(fileAddress="template.xml"):
+def parserXML(fileAddress):
     tree = ET.parse(fileAddress)
     root = tree.getroot()
     _board = Board(root.find("Board").attrib.get("title"))

@@ -72,9 +72,11 @@ class DateCheckBox(QWidget):
             if self.date[self.index]:
                 self.dateLabel.setText(self.text + self.date[self.index])
                 self.dateLabel.setEnabled(True)
+        self.OnCheck.emit()
 
     def isChecked(self):
         return self.checkBox.isChecked()
+
 
 if __name__ == "__main__":
     app = QApplication([])

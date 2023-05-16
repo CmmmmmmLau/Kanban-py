@@ -2,6 +2,7 @@ import os
 
 from PySide6.QtWidgets import QApplication, QMessageBox, QMainWindow, QHBoxLayout, QWidget
 
+from Board import template
 from db import parserXML
 from gui import MainBoard, Board
 
@@ -24,7 +25,7 @@ class MainWindow(QMainWindow):
                                          QMessageBox.Yes | QMessageBox.No)
 
             if reply == QMessageBox.Yes:
-                board = parserXML("template.xml")
+                board = template()
                 boardWindow = MainBoard(board)
                 layout.addWidget(boardWindow)
             else:
